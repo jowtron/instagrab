@@ -51,11 +51,25 @@ can't see.
 
 ```bash
 cargo tauri dev      # development
-cargo tauri build    # -> src-tauri/target/release/bundle/{macos,dmg}
+cargo tauri build    # -> src-tauri/target/release/bundle/
 ```
 
-The post field takes a full URL (`/p/`, `/reel/` or `/tv/`, query string and
+Builds on macOS, Windows and Linux. Prebuilt (unsigned) bundles for all three
+are attached to each [release](../../releases).
+
+**Single post** takes a full URL (`/p/`, `/reel/` or `/tv/`, query string and
 all) **or just the bare code** — `ABCDEFGHIJK` on its own is enough.
+
+**Whole profile** takes a username, `@username`, or a profile URL. If you don't
+know the exact handle, search by name and pick from the results — each shows
+whether the account is private, which decides whether you can see it at all.
+Picking a result fills the field but doesn't start a scan; that stays a
+deliberate second action.
+
+Scanning lists the posts so you can choose; downloading then fetches each at
+full resolution. Progress reports at two levels — files within the current
+post, and posts within the batch — with a running byte count, because in
+profile mode a single bar would be measuring whole posts and reading as stalled.
 
 Downloads default to `~/Downloads` when no folder is chosen; **Choose folder…**
 overrides it. Every post saves into its own `<shortcode>/` subfolder, since a
@@ -99,10 +113,11 @@ who you are signed in as.
   signed in inside Chrome, with no re-login required.
 - **Forget** drops an account from this app only; Instagram is unaffected.
 
-Accounts live in
-`~/Library/Application Support/space.emus.instagrab/accounts.json`. A legacy
-single `cookies.txt` is migrated automatically on first run and named once the
-session resolves.
+Accounts live in the OS config directory — on macOS
+`~/Library/Application Support/space.emus.instagrab/`, on Linux
+`~/.config/space.emus.instagrab/`, on Windows
+`%APPDATA%\\space.emus.instagrab\\`. A legacy single `cookies.txt` is migrated
+automatically on first run and named once the session resolves.
 
 > The file holds live session cookies in plain text — anyone with read access to
 > it can act as those accounts. It is outside the repo and gitignored.
@@ -145,3 +160,7 @@ without repeating posts.
   Full-resolution requires one page fetch per post, so a 165-post profile means
   165 requests. Going faster gets you rate-limited.
 - Sessions last months, not forever. When the dot goes red, sign in again.
+- Releases are **unsigned**: macOS needs right-click → Open the first time, and
+  Windows shows a SmartScreen warning. Signing requires paid certificates.
+- Windows and Linux builds compile, bundle and pass CI, but have had far less
+  real-world use than the macOS ones.
