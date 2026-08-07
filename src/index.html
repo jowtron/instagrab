@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>instagrab</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="bar">
+    <div class="brand">instagrab</div>
+    <div class="auth">
+      <span id="auth-dot" class="dot"></span>
+      <select id="account-picker" title="Switch account"></select>
+      <span id="auth-text">checking…</span>
+      <button id="btn-signin" class="ghost" title="Sign in to another Instagram account">Add account</button>
+      <button id="btn-capture" class="ghost hidden" title="Only needed if auto-detect does not fire">Capture now</button>
+      <button id="btn-forget" class="ghost hidden" title="Remove the current account from this app">Forget</button>
+      <button id="btn-paste" class="ghost" title="Paste a cookie header from a signed-in browser">Paste cookies</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-mode="post">Single post</button>
+    <button class="tab" data-mode="profile">Whole profile</button>
+  </nav>
+
+  <section id="pane-post" class="pane">
+    <div class="row">
+      <input id="post-url" type="text" placeholder="paste a post/reel URL — or just its code" spellcheck="false" />
+      <button id="btn-get" class="primary">Get</button>
+    </div>
+  </section>
+
+  <section id="pane-profile" class="pane hidden">
+    <div class="row">
+      <input id="profile-user" type="text" placeholder="username, @username, or a profile URL" spellcheck="false" />
+      <select id="profile-limit">
+        <option value="12">latest 12</option>
+        <option value="36">latest 36</option>
+        <option value="120">latest 120</option>
+        <option value="0">everything</option>
+      </select>
+      <button id="btn-scan" class="primary">Scan</button>
+    </div>
+    <div class="row searchrow">
+      <input id="profile-search" type="text" placeholder="…or search for an account by name" spellcheck="false" />
+      <button id="btn-search" class="ghost">Search</button>
+    </div>
+    <ul id="search-results" class="hits hidden"></ul>
+    <p class="hint">Scanning is paced at ~1 page/second to stay under Instagram's rate limits.</p>
+  </section>
+
+  <div id="status" class="status hidden"></div>
+
+  <main id="results" class="results"></main>
+
+  <footer id="actions" class="actions hidden">
+    <label class="selall"><input type="checkbox" id="check-all" checked /> select all</label>
+    <span id="sel-count" class="muted"></span>
+    <div class="spacer"></div>
+    <button id="btn-dest" class="ghost">Choose folder…</button>
+    <span id="dest-label" class="muted">…</span>
+    <button id="btn-download" class="primary">Download</button>
+  </footer>
+
+  <div id="progress" class="progress hidden">
+    <div class="pbar"><div id="pfill"></div></div>
+    <div id="ptext" class="muted"></div>
+  </div>
+
+  <dialog id="paste-dlg">
+    <form method="dialog">
+      <h3>Paste a cookie header</h3>
+      <p class="muted">
+        From a signed-in Instagram tab: DevTools → Network → any request →
+        Request Headers → copy the whole <code>Cookie:</code> value.
+        The <code>sessionid</code> on its own is not enough.
+      </p>
+      <textarea id="paste-box" rows="5" spellcheck="false" placeholder="sessionid=…; csrftoken=…; ds_user_id=…"></textarea>
+      <menu>
+        <button value="cancel" class="ghost">Cancel</button>
+        <button id="paste-save" value="save" class="primary">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
