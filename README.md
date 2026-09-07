@@ -15,7 +15,8 @@ and the convenient ones are lossy:
 | Route | Gives you | Problem |
 |---|---|---|
 | `/api/v1/media/{id}/info/` | clean structure, captions, video URLs | stills capped at **720px** wide |
-| `/api/v1/feed/user/{id}/` | paginated post list | same 720px cap |
+| `/api/v1/feed/user/{id}/` | paginated post list | same 720px cap, and action-blocked (see below) |
+| `graphql/query` (profile grid) | paginated post list, what the web client uses | 720px cap; needs a persisted query id |
 | post HTML document | full-res CDN ladder (1440 / 1080 / 720 / 640) | no usable structure |
 
 So the app takes **structure from the API** and **resolution from the HTML**,
@@ -159,6 +160,15 @@ without repeating posts.
 - Profile scanning is paced at ~1 page/second and downloads at ~1 post/700ms.
   Full-resolution requires one page fetch per post, so a 165-post profile means
   165 requests. Going faster gets you rate-limited.
+- **Profile listing goes through GraphQL, not `/api/v1/`.** Instagram
+  action-blocks the `/api/v1/` profile endpoints (`feedback_required`) for
+  accounts that have listed a few profiles, and the block outlives any change
+  of IP, cookies or headers. The web client stopped using those endpoints, so
+  the app now pages a profile through the same persisted GraphQL query the
+  browser scrolls with, then fetches each post exactly as the Single post tab
+  does. If a block does land on something, the app now says so in words
+  instead of "error decoding response body". Don't retry a block in a loop —
+  that extends it.
 - Sessions last months, not forever. When the dot goes red, sign in again.
 - Releases are **unsigned**: macOS needs right-click → Open the first time, and
   Windows shows a SmartScreen warning. Signing requires paid certificates.

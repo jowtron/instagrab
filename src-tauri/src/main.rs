@@ -377,8 +377,11 @@ struct ScanProgress {
     done: bool,
 }
 
-/// Walks a profile's timeline. `limit` of 0 means everything.
-/// Paced deliberately — Instagram throttles fast pagination hard.
+/// Walks a profile's grid through the GraphQL connection the web client uses,
+/// which is not subject to the `/api/v1/` profile action block. `limit` of 0
+/// means everything. Paced deliberately — Instagram throttles fast pagination
+/// hard. Only shortcodes come from here; the download step fetches each post
+/// individually, exactly as the Single post tab does.
 #[tauri::command]
 async fn fetch_profile(
     app: AppHandle,
@@ -388,15 +391,16 @@ async fn fetch_profile(
 ) -> Result<Vec<ig::PostSummary>, String> {
     let cl = client(&state)?;
     let uname = ig::username_from_input(&username).map_err(|e| e.to_string())?;
-    let (uid, total) = cl.user_id(&uname).await.map_err(|e| e.to_string())?;
+    // Cosmetic ("n of N"); a miss just leaves the total blank.
+    let total = cl.post_count(&uname).await.unwrap_or(0);
 
     let mut all: Vec<ig::PostSummary> = Vec::new();
     let mut cursor: Option<String> = None;
     loop {
         let (page, next) = cl
-            .feed_page(&uid, cursor.as_deref())
+            .profile_page(&uname, cursor.as_deref())
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| format!("{e:#}"))?;
         if page.is_empty() {
             break;
         }

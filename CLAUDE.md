@@ -25,7 +25,7 @@ on its own. Keep Instagram logic there and app plumbing in `main.rs`.
 ```bash
 cargo tauri dev                 # run it
 cargo tauri build               # bundle
-cd src-tauri && cargo test      # 10 offline unit tests
+cd src-tauri && cargo test      # 15 offline unit tests
 cd src-tauri && cargo clippy --all-targets -- -D warnings
 cd src-tauri && cargo fmt --check
 ```
@@ -73,6 +73,38 @@ stores a session that doesn't work.
 
 **`accounts/edit/web_form_data/` is how you learn who you are.** The obvious
 endpoints (`accounts/current_user/`, `users/{pk}/info/`) return 400 or non-JSON.
+
+**Profile enumeration must not use `/api/v1/`.** `users/web_profile_info/` and
+`feed/user/{id}/` are action-blocked (`feedback_required`, HTTP 429 with an
+HTML body on `www`) for an account that has listed a few profiles, and the
+block survives new IPs, cookie jars and header sets. It's scoped to the
+*action*: `media/{id}/info/`, `topsearch/` and the post document keep working,
+which is why single posts never broke. Retrying extends the block. The web
+client itself makes zero `/api/v1/` profile calls; it pages the grid with the
+persisted GraphQL query `PolarisProfilePostsTabContentQuery_connection`, which
+is what `Client::profile_page` sends. Verified working, with two-page
+pagination, from an account whose `/api/v1/` profile access was blocked.
+
+**The GraphQL query is a `doc_id`, and it can rotate.** If profile scans start
+failing with "execution error" or an empty reply, read the current id from the
+console of a signed-in browser tab on any profile page:
+
+```js
+require("PolarisProfilePostsTabContentQuery_connection.graphql").params.id
+require("PolarisProfilePostsTabContentQuery_connection.graphql").params.providedVariables
+```
+
+Every name in `providedVariables` must be present in `variables` or the server
+answers only "execution error". The other form fields (`lsd`, `av`, `__user`)
+are not checked; `X-CSRFToken` matching the `csrftoken` cookie *is*, and
+without it you get a login page. Don't bother fetching the JS bundles to grep
+for the id — `static.cdninstagram.com` blocks cross-origin reads, and the
+logged-out page uses different queries (`PolarisLoggedOutDesktopWWW…`) that
+return nothing over plain HTTP.
+
+**The post count comes from `og:description`.** The JSON that carried it was
+`web_profile_info`, which is blocked; the profile document still answers and
+its meta tag says "8,579 Posts". It's cosmetic and best-effort.
 
 **Bundle targets must stay `"all"`.** `["app", "dmg"]` is macOS-only and
 produces no Windows or Linux artifacts, which fails the release job with the
